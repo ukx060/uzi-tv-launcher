@@ -22,12 +22,14 @@ class FadeImageView @JvmOverloads constructor(ctx: Context, attrs: AttributeSet?
 
     override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
         super.onSizeChanged(w, h, ow, oh)
-        val clear = 0x00000000; val solid = 0xFF000000.toInt()
-        val ease = intArrayOf(clear, 0x2E000000, 0x99000000.toInt(), 0xE6000000.toInt(), solid)
-        val pos = floatArrayOf(0f, 0.3f, 0.6f, 0.82f, 1f)
-        left = LinearGradient(0f, 0f, w * 0.55f, 0f, ease, pos, Shader.TileMode.CLAMP)
-        bottom = LinearGradient(0f, h.toFloat(), 0f, h * 0.45f, ease, pos, Shader.TileMode.CLAMP)
-        top = LinearGradient(0f, 0f, 0f, h * 0.22f, 0x8C000000.toInt(), solid, Shader.TileMode.CLAMP)
+        // smoothstep-shaped alpha ramp, so there is no visible start or end of the fade
+        val n = 12
+        val ramp = IntArray(n + 1) { i -> val t = i / n.toFloat(); ((t * t * (3 - 2 * t)) * 255).toInt() shl 24 }
+        val pos = FloatArray(n + 1) { it / n.toFloat() }
+        left = LinearGradient(0f, 0f, w * 0.6f, 0f, ramp, pos, Shader.TileMode.CLAMP)
+        // fully transparent over the bottom 18% (behind the app row), fading in up to 30% height
+        bottom = LinearGradient(0f, h * 0.82f, 0f, h * 0.30f, ramp, pos, Shader.TileMode.CLAMP)
+        top = LinearGradient(0f, 0f, 0f, h * 0.25f, 0x80000000.toInt(), 0xFF000000.toInt(), Shader.TileMode.CLAMP)
     }
 
     override fun onDraw(canvas: Canvas) {
