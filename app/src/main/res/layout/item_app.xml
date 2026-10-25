@@ -2,24 +2,27 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:clipChildren="false" android:clipToPadding="false"
-    android:gravity="center_horizontal"
-    android:orientation="vertical">
+    android:gravity="center_horizontal" android:orientation="vertical">
     <FrameLayout android:id="@+id/tile"
         android:layout_width="160dp" android:layout_height="90dp"
         android:background="@drawable/tile_bg"
-        android:focusable="true" android:focusableInTouchMode="true"
-        android:clickable="true" android:longClickable="true">
+        android:focusable="true" android:clickable="true" android:longClickable="true">
         <ImageView android:id="@+id/banner" android:layout_width="match_parent" android:layout_height="match_parent"
             android:scaleType="centerCrop" android:importantForAccessibility="no" />
         <ImageView android:id="@+id/icon" android:layout_width="56dp" android:layout_height="56dp"
             android:layout_gravity="center" android:scaleType="fitCenter" android:importantForAccessibility="no" />
         <View android:id="@+id/shine" android:layout_width="match_parent" android:layout_height="match_parent"
-            android:background="@drawable/shine" android:alpha="0" />
+            android:background="@drawable/shine" android:rotation="0" android:alpha="0" />
+        <View android:id="@+id/dim" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@drawable/dim" android:alpha="0.42" />
+        <View android:id="@+id/rim" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@drawable/rim" android:alpha="0" />
     </FrameLayout>
     <TextView android:id="@+id/label"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="14dp" android:gravity="center"
+        android:layout_marginTop="15dp" android:gravity="center"
         android:maxLines="1" android:ellipsize="end"
         android:fontFamily="sans-serif-medium"
+        android:shadowColor="#99000000" android:shadowDy="1" android:shadowRadius="6"
         android:textColor="#FFFFFF" android:textSize="15sp" android:alpha="0" />
 </LinearLayout>

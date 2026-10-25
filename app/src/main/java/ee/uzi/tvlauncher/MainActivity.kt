@@ -17,50 +17,59 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.util.concurrent.Executors
 
+/**
+ * Home screen modelled on tvOS: a Top Shelf showcase (full-bleed art, title, Play / Open,
+ * page dots) for the focused app, above a grid of app tiles. Tiles dim unless focused.
+ */
 class MainActivity : Activity() {
 
     private lateinit var grid: RecyclerView
-    private lateinit var shelf: RecyclerView
+    private lateinit var topWrap: View
     private lateinit var bgA: ImageView
     private lateinit var bgB: ImageView
+    private lateinit var artScrim: View
+    private lateinit var artScrimLeft: View
+    private lateinit var panel: View
     private lateinit var heroTitle: TextView
     private lateinit var heroSub: TextView
     private lateinit var heroDesc: TextView
+    private lateinit var btnPlay: TextView
+    private lateinit var btnOpen: TextView
+    private lateinit var dots: LinearLayout
     private lateinit var adapter: AppAdapter
-    private lateinit var shelfAdapter: ShelfAdapter
     private lateinit var prefs: Prefs
     private lateinit var images: ImageLoader
 
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
+    private var cols = 5
+    private var dp = 1f
     private var showingA = true
     private var bgKey: String? = null
     private var pendingBg: Runnable? = null
     private var focusPkg: String? = null
     private var currentApp: AppEntry? = null
     private var shelfPkg: String? = null
-    private var rotIndex = 0
+    private var shelfItems: List<ShelfItem> = emptyList()
+    private var shelfIndex = 0
+    private var shelfOn = false
     private var shelves: Map<String, List<ShelfItem>> = emptyMap()
     private var loaded = false
     private var initSent = false
 
     private val rotate = object : Runnable {
         override fun run() {
-            val items = shelfAdapter.items
-            if (items.size > 1 && !shelf.hasFocus()) {
-                rotIndex = (rotIndex + 1) % items.size
-                showShelfItem(items[rotIndex], rotIndex)
-                shelf.smoothScrollToPosition(rotIndex)
-            }
+            if (shelfOn && shelfItems.size > 1 && !panel.hasFocus()) showShelfItem((shelfIndex + 1) % shelfItems.size)
             main.postDelayed(this, ROTATE_MS)
         }
     }
@@ -72,53 +81,54 @@ class MainActivity : Activity() {
             main.postDelayed(reloadShelvesLater, 2000)
         }
     }
-
     private val pkgReceiver = object : BroadcastReceiver() {
-        override fun onReceive(c: Context, i: Intent) {
-            reload()
-        }
+        override fun onReceive(c: Context, i: Intent) = reload()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setFormat(PixelFormat.RGBA_8888) // avoid 16-bit banding on TV surfaces
+        window.setFormat(PixelFormat.RGBA_8888)
         setContentView(R.layout.activity_main)
         prefs = Prefs(this)
         images = ImageLoader(applicationContext)
         grid = findViewById(R.id.grid)
-        shelf = findViewById(R.id.shelf)
+        topWrap = findViewById(R.id.topWrap)
         bgA = findViewById(R.id.bgA)
         bgB = findViewById(R.id.bgB)
+        artScrim = findViewById(R.id.artScrim)
+        artScrimLeft = findViewById(R.id.artScrimLeft)
+        panel = findViewById(R.id.shelfPanel)
         heroTitle = findViewById(R.id.heroTitle)
         heroSub = findViewById(R.id.heroSub)
         heroDesc = findViewById(R.id.heroDesc)
+        btnPlay = findViewById(R.id.btnPlay)
+        btnOpen = findViewById(R.id.btnOpen)
+        dots = findViewById(R.id.dots)
 
         val dm = resources.displayMetrics
-        val d = dm.density
-        val cols = 5
-        val gap = (26 * d).toInt()
-        val side = (64 * d).toInt() - gap / 2
+        dp = dm.density
+        val gap = (24 * dp).toInt()
+        val side = (56 * dp).toInt() - gap / 2
         grid.setPadding(side, grid.paddingTop, side, grid.paddingBottom)
-        val span = (dm.widthPixels - 2 * side) / cols
-        val tileW = span - gap
+        val tileW = (dm.widthPixels - 2 * side) / cols - gap
         val tileH = tileW * 9 / 16
 
-        adapter = AppAdapter(tileW, tileH, 18 * d, ::onTileFocused, ::launch, ::showMenu)
+        adapter = AppAdapter(tileW, tileH, 22 * dp, ::onTileFocused, ::launch, ::showMenu, ::onTileUp)
         grid.layoutManager = GridLayoutManager(this, cols)
         grid.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(out: Rect, v: View, p: RecyclerView, s: RecyclerView.State) {
-                out.set(0, 0, 0, (20 * d).toInt())
+                out.set(0, 0, 0, (18 * dp).toInt())
             }
         })
         grid.itemAnimator = null
         grid.setHasFixedSize(true)
         grid.setItemViewCacheSize(40)
         grid.adapter = adapter
+        grid.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) = applyScrollFade()
+        })
 
-        shelfAdapter = ShelfAdapter(images, (150 * d).toInt(), (84 * d).toInt(), 14 * d, ::onShelfFocused, ::openShelf)
-        shelf.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        shelf.itemAnimator = null
-        shelf.adapter = shelfAdapter
+        setupButtons()
 
         registerReceiver(pkgReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)
@@ -126,15 +136,45 @@ class MainActivity : Activity() {
             addAction(Intent.ACTION_PACKAGE_CHANGED)
             addDataScheme("package")
         })
-
-        if (hasListings()) startShelves()
-        else requestPermissions(arrayOf(PERM_LISTINGS), REQ_LISTINGS)
-
+        if (hasListings()) startShelves() else requestPermissions(arrayOf(PERM_LISTINGS), REQ_LISTINGS)
         reload()
     }
 
-    private fun hasListings() =
-        checkSelfPermission(PERM_LISTINGS) == PackageManager.PERMISSION_GRANTED
+    // ---------- lifecycle ----------
+
+    override fun onResume() {
+        super.onResume()
+        if (hasListings()) loadShelves()
+        main.removeCallbacks(rotate); main.postDelayed(rotate, ROTATE_MS)
+    }
+
+    override fun onPause() { main.removeCallbacks(rotate); super.onPause() }
+
+    override fun onDestroy() {
+        try { unregisterReceiver(pkgReceiver) } catch (_: Exception) {}
+        try { contentResolver.unregisterContentObserver(tvObserver) } catch (_: Exception) {}
+        main.removeCallbacksAndMessages(null)
+        io.shutdownNow(); images.shutdown()
+        super.onDestroy()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        grid.scrollToPosition(0)
+        focusPosition(0)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        when {
+            panel.hasFocus() -> focusApp(shelfPkg)
+            grid.computeVerticalScrollOffset() > 0 -> { grid.smoothScrollToPosition(0); focusPosition(0) }
+        }
+    }
+
+    // ---------- permissions / shelves ----------
+
+    private fun hasListings() = checkSelfPermission(PERM_LISTINGS) == PackageManager.PERMISSION_GRANTED
 
     private fun startShelves() {
         try {
@@ -149,36 +189,21 @@ class MainActivity : Activity() {
         if (code == REQ_LISTINGS && hasListings()) startShelves()
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (hasListings()) loadShelves()
-        main.removeCallbacks(rotate)
-        main.postDelayed(rotate, ROTATE_MS)
+    private fun loadShelves() {
+        io.execute {
+            val m = try { ShelfRepo.load(applicationContext) } catch (_: Exception) { emptyMap() }
+            main.post {
+                shelves = m
+                if (!panel.hasFocus()) { shelfPkg = null; currentApp?.let { showAppShelf(it) } }
+            }
+        }
     }
 
-    override fun onPause() {
-        main.removeCallbacks(rotate)
-        super.onPause()
-    }
-
-    override fun onDestroy() {
-        try { unregisterReceiver(pkgReceiver) } catch (_: Exception) {}
-        try { contentResolver.unregisterContentObserver(tvObserver) } catch (_: Exception) {}
-        main.removeCallbacksAndMessages(null)
-        io.shutdownNow()
-        images.shutdown()
-        super.onDestroy()
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        grid.scrollToPosition(0)
-        focusPosition(0)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (shelf.hasFocus()) focusPkg?.let { p -> focusPosition(adapter.items.indexOfFirst { it.pkg == p }.coerceAtLeast(0)) }
+    /** Apps publish Top Shelf rows when a launcher asks; the stock launcher normally does this. */
+    private fun requestPrograms(list: List<AppEntry>) {
+        for (e in list) if (!e.isSettings) try {
+            sendBroadcast(Intent(TvContract.ACTION_INITIALIZE_PROGRAMS).setPackage(e.pkg))
+        } catch (_: Exception) {}
     }
 
     // ---------- apps ----------
@@ -190,10 +215,14 @@ class MainActivity : Activity() {
             main.post {
                 adapter.submit(list)
                 val target = focusPkg?.let { p -> list.indexOfFirst { it.pkg == p } }?.takeIf { it >= 0 } ?: 0
-                if (!loaded || (grid.focusedChild == null && !shelf.hasFocus())) focusPosition(target)
+                if (!loaded || (grid.focusedChild == null && !panel.hasFocus())) focusPosition(target)
                 loaded = true
             }
         }
+    }
+
+    private fun focusApp(pkg: String?) {
+        focusPosition(adapter.items.indexOfFirst { it.pkg == pkg }.coerceAtLeast(0))
     }
 
     private fun focusPosition(pos: Int) {
@@ -214,86 +243,140 @@ class MainActivity : Activity() {
         showAppShelf(e)
     }
 
-    // ---------- top shelf ----------
-
-    /** Apps publish Top Shelf rows when a launcher asks; the stock launcher normally does this. */
-    private fun requestPrograms(list: List<AppEntry>) {
-        for (e in list) if (!e.isSettings) try {
-            sendBroadcast(Intent(TvContract.ACTION_INITIALIZE_PROGRAMS).setPackage(e.pkg))
-        } catch (_: Exception) {}
+    /** UP from the first row jumps into the Top Shelf (always onto Play). */
+    private fun onTileUp(pos: Int): Boolean {
+        if (pos >= cols || !shelfOn) return false
+        btnPlay.requestFocus()
+        return true
     }
 
-    private fun loadShelves() {
-        io.execute {
-            val m = ShelfRepo.load(applicationContext)
-            main.post {
-                shelves = m
-                shelfPkg = null
-                currentApp?.let { if (!shelf.hasFocus()) showAppShelf(it) }
+    // ---------- Top Shelf ----------
+
+    private fun setupButtons() {
+        for (b in arrayOf(btnPlay, btnOpen)) {
+            b.setOnFocusChangeListener { v, has ->
+                val s = if (has) 1.08f else 1f
+                v.animate().scaleX(s).scaleY(s).translationZ(if (has) 10 * dp else 0f).setDuration(150).start()
             }
         }
+        btnPlay.setOnClickListener { shelfItems.getOrNull(shelfIndex)?.let { openShelf(it) } }
+        btnOpen.setOnClickListener { currentApp?.let { launch(it) } }
+        val keys = View.OnKeyListener { v, code, ev ->
+            if (ev.action != KeyEvent.ACTION_DOWN) return@OnKeyListener false
+            when {
+                code == KeyEvent.KEYCODE_DPAD_DOWN -> { focusApp(shelfPkg); true }
+                code == KeyEvent.KEYCODE_DPAD_UP -> true
+                code == KeyEvent.KEYCODE_DPAD_LEFT && v === btnPlay -> { stepShelf(-1); true }
+                code == KeyEvent.KEYCODE_DPAD_RIGHT && v === btnOpen -> { stepShelf(1); true }
+                else -> false
+            }
+        }
+        btnPlay.setOnKeyListener(keys)
+        btnOpen.setOnKeyListener(keys)
+    }
+
+    private fun stepShelf(d: Int) {
+        if (shelfItems.size < 2) return
+        showShelfItem((shelfIndex + d + shelfItems.size) % shelfItems.size)
     }
 
     private fun showAppShelf(e: AppEntry) {
         val items = shelves[e.pkg].orEmpty()
         if (items.isEmpty()) {
-            shelfPkg = null
-            shelfAdapter.submit(emptyList())
-            shelf.visibility = View.INVISIBLE
-            showHero(false)
+            shelfPkg = null; shelfItems = emptyList()
+            setShelf(false)
             clearBackground()
             return
         }
-        showHero(true)
         if (shelfPkg != e.pkg) {
             shelfPkg = e.pkg
-            shelfAdapter.submit(items)
-            shelf.scrollToPosition(0)
-            rotIndex = 0
+            shelfItems = items
+            shelfIndex = 0
+            buildDots(items.size)
         }
-        shelf.visibility = View.VISIBLE
-        showShelfItem(items[rotIndex.coerceIn(0, items.size - 1)], rotIndex)
-        main.removeCallbacks(rotate)
-        main.postDelayed(rotate, ROTATE_MS)
+        btnOpen.text = "Open ${e.label}"
+        setShelf(true)
+        showShelfItem(shelfIndex.coerceIn(0, items.size - 1))
+        main.removeCallbacks(rotate); main.postDelayed(rotate, ROTATE_MS)
     }
 
-    private fun showShelfItem(item: ShelfItem, idx: Int) {
+    private fun setShelf(on: Boolean) {
+        shelfOn = on
+        btnPlay.isFocusable = on
+        btnOpen.isFocusable = on
+        val a = if (on) 1f else 0f
+        panel.animate().alpha(a).setDuration(260).start()
+        artScrim.animate().alpha(a).setDuration(260).start()
+        artScrimLeft.animate().alpha(a).setDuration(260).start()
+    }
+
+    private fun buildDots(n: Int) {
+        dots.removeAllViews()
+        if (n < 2) return
+        repeat(n) {
+            val v = View(this)
+            val lp = LinearLayout.LayoutParams((6 * dp).toInt(), (6 * dp).toInt())
+            lp.marginEnd = (6 * dp).toInt()
+            v.layoutParams = lp
+            v.setBackgroundResource(R.drawable.dot)
+            dots.addView(v)
+        }
+    }
+
+    private fun updateDots() {
+        for (i in 0 until dots.childCount) {
+            val v = dots.getChildAt(i)
+            val active = i == shelfIndex
+            v.layoutParams = (v.layoutParams as LinearLayout.LayoutParams).apply {
+                width = ((if (active) 18 else 6) * dp).toInt()
+            }
+            v.alpha = if (active) 1f else 0.4f
+        }
+    }
+
+    private fun showShelfItem(i: Int) {
+        val item = shelfItems.getOrNull(i) ?: return
+        shelfIndex = i
         val app = currentApp?.label ?: ""
-        heroSub.text = if (item.upNext) "Up Next · $app" else app
+        heroSub.text = if (item.upNext) "Up Next · $app" else "Featured on $app"
         heroTitle.text = item.title
         heroDesc.text = item.subtitle ?: ""
-        shelfAdapter.active = idx
+        heroDesc.visibility = if (item.subtitle.isNullOrBlank()) View.GONE else View.VISIBLE
+        btnPlay.text = if (item.upNext) "▶  Resume" else "▶  Play"
+        updateDots()
         val img = item.image
         if (img == null) { clearBackground(); return }
         setBackground("img|$img") { cb -> images.load(img, 1280) { b -> cb(b) } }
     }
 
-    private fun onShelfFocused(item: ShelfItem, idx: Int) {
-        rotIndex = idx
-        showShelfItem(item, idx)
-    }
-
     private fun openShelf(item: ShelfItem) {
         try {
-            val uri = item.intentUri
-            if (uri != null) {
-                startActivity(Intent.parseUri(uri, Intent.URI_INTENT_SCHEME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            item.intentUri?.let {
+                startActivity(Intent.parseUri(it, Intent.URI_INTENT_SCHEME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 return
             }
         } catch (_: Exception) {}
         adapter.items.firstOrNull { it.pkg == item.pkg }?.let { launch(it) }
     }
 
+    private fun applyScrollFade() {
+        val off = grid.computeVerticalScrollOffset()
+        val f = (1f - off / (160 * dp)).coerceIn(0f, 1f)
+        topWrap.alpha = f
+        val canFocus = shelfOn && f > 0.5f
+        btnPlay.isFocusable = canFocus
+        btnOpen.isFocusable = canFocus
+    }
+
     // ---------- background ----------
 
-    /** Debounced, keyed background swap. [produce] must call back on the main thread. */
     private fun setBackground(key: String, produce: ((Bitmap?) -> Unit) -> Unit) {
         if (bgKey == key) return
         bgKey = key
         pendingBg?.let { main.removeCallbacks(it) }
         val r = Runnable { produce { b -> if (b != null && bgKey == key) crossfade(b) } }
         pendingBg = r
-        main.postDelayed(r, 110)
+        main.postDelayed(r, 120)
     }
 
     private fun clearBackground() {
@@ -303,17 +386,12 @@ class MainActivity : Activity() {
         bgB.animate().alpha(0f).setDuration(350).start()
     }
 
-    private fun showHero(on: Boolean) {
-        val a = if (on) 1f else 0f
-        for (v in arrayOf(heroSub, heroTitle, heroDesc)) v.animate().alpha(a).setDuration(250).start()
-    }
-
     private fun crossfade(bmp: Bitmap) {
         val show = if (showingA) bgB else bgA
         val hide = if (showingA) bgA else bgB
         show.setImageBitmap(bmp)
-        show.animate().alpha(1f).setDuration(400).start()
-        hide.animate().alpha(0f).setDuration(400).start()
+        show.animate().alpha(1f).setDuration(450).start()
+        hide.animate().alpha(0f).setDuration(450).start()
         showingA = !showingA
     }
 
@@ -338,7 +416,8 @@ class MainActivity : Activity() {
                 when (w) {
                     0 -> { prefs.hidden = emptySet(); reload() }
                     1 -> { prefs.order = Prefs.DEFAULT_ORDER; reload() }
-                    2 -> if (hasListings()) loadShelves() else requestPermissions(arrayOf(PERM_LISTINGS), REQ_LISTINGS)
+                    2 -> if (hasListings()) { requestPrograms(adapter.items); loadShelves() }
+                         else requestPermissions(arrayOf(PERM_LISTINGS), REQ_LISTINGS)
                     3 -> launch(e)
                 }
             }.show()
