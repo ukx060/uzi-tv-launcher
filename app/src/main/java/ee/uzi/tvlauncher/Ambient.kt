@@ -12,6 +12,14 @@ object Ambient {
         val px = IntArray(W * H)
         small.getPixels(px, 0, W, 0, 0, W, H)
         repeat(3) { pass(px, true); pass(px, false) }
+        // richer, Apple Music-style ambient colour
+        for (i in px.indices) {
+            val c = px[i]
+            val r = (c shr 16) and 255; val g = (c shr 8) and 255; val b = c and 255
+            val l = (r * 299 + g * 587 + b * 114) / 1000
+            fun sat(v: Int) = (l + (v - l) * 1.45f).toInt().coerceIn(0, 255)
+            px[i] = (0xFF shl 24) or (sat(r) shl 16) or (sat(g) shl 8) or sat(b)
+        }
         small.setPixels(px, 0, W, 0, 0, W, H)
         return small
     }

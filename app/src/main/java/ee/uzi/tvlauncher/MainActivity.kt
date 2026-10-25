@@ -39,6 +39,8 @@ class MainActivity : Activity() {
     private lateinit var bgB: ImageView
     private lateinit var artScrim: View
     private lateinit var artCard: ImageView
+    private lateinit var artFrame: View
+    private lateinit var artClip: View
     private lateinit var artScrimLeft: View
     private lateinit var panel: View
     private lateinit var heroTitle: TextView
@@ -98,6 +100,10 @@ class MainActivity : Activity() {
         bgB = findViewById(R.id.bgB)
         artScrim = findViewById(R.id.artScrim)
         artCard = findViewById(R.id.artCard)
+        artFrame = findViewById(R.id.artFrame)
+        artClip = findViewById(R.id.artClip)
+        artClip.clipToOutline = true
+        findViewById<ImageView>(R.id.artShadow).setImageBitmap(softShadow((468 * dp).toInt(), (290 * dp).toInt(), (30 * dp)))
         artScrimLeft = findViewById(R.id.artScrimLeft)
         panel = findViewById(R.id.shelfPanel)
         heroTitle = findViewById(R.id.heroTitle)
@@ -317,7 +323,7 @@ class MainActivity : Activity() {
         if (n < 2) return
         repeat(n) {
             val v = View(this)
-            val lp = LinearLayout.LayoutParams((6 * dp).toInt(), (6 * dp).toInt())
+            val lp = LinearLayout.LayoutParams((5 * dp).toInt(), (5 * dp).toInt())
             lp.marginEnd = (6 * dp).toInt()
             v.layoutParams = lp
             v.setBackgroundResource(R.drawable.dot)
@@ -330,9 +336,9 @@ class MainActivity : Activity() {
             val v = dots.getChildAt(i)
             val active = i == shelfIndex
             v.layoutParams = (v.layoutParams as LinearLayout.LayoutParams).apply {
-                width = ((if (active) 18 else 6) * dp).toInt()
+                width = ((if (active) 16 else 5) * dp).toInt()
             }
-            v.alpha = if (active) 1f else 0.4f
+            v.alpha = if (active) 0.95f else 0.3f
         }
     }
 
@@ -340,12 +346,11 @@ class MainActivity : Activity() {
         val item = shelfItems.getOrNull(i) ?: return
         shelfIndex = i
         val app = currentApp?.label ?: ""
-        artCard.clipToOutline = true
         heroSub.text = if (item.upNext) "Up Next · $app" else "Featured on $app"
         heroTitle.text = item.title
         heroDesc.text = item.subtitle ?: ""
         heroDesc.visibility = if (item.subtitle.isNullOrBlank()) View.GONE else View.VISIBLE
-        btnPlay.text = if (item.upNext) "▶  Resume" else "▶  Play"
+        btnPlay.text = if (item.upNext) "Resume" else "Play"
         updateDots()
         val img = item.image
         if (img == null) { clearBackground(); return }
@@ -387,7 +392,7 @@ class MainActivity : Activity() {
         pendingBg?.let { main.removeCallbacks(it) }
         bgA.animate().alpha(0f).setDuration(350).start()
         bgB.animate().alpha(0f).setDuration(350).start()
-        artCard.animate().alpha(0f).setDuration(250).start()
+        artFrame.animate().alpha(0f).setDuration(250).start()
     }
 
     /**
@@ -400,16 +405,39 @@ class MainActivity : Activity() {
         val show = if (showingA) bgB else bgA
         val hide = if (showingA) bgA else bgB
         show.setImageBitmap(bg)
-        show.setColorFilter(if (hiRes) 0 else 0x59000000, android.graphics.PorterDuff.Mode.SRC_ATOP)
-        show.animate().alpha(1f).setDuration(450).start()
-        hide.animate().alpha(0f).setDuration(450).start()
+        show.setColorFilter(if (hiRes) 0 else 0x4D000000, android.graphics.PorterDuff.Mode.SRC_ATOP)
+        show.animate().cancel()
+        show.scaleX = 1f; show.scaleY = 1f
+        show.animate().alpha(1f).setDuration(500).start()
+        if (hiRes) kenBurns(show)
+        hide.animate().alpha(0f).setDuration(500).start()
         showingA = !showingA
-        if (hiRes) artCard.animate().alpha(0f).setDuration(250).start()
+        if (hiRes) artFrame.animate().alpha(0f).setDuration(250).start()
         else {
             artCard.setImageBitmap(bmp)
-            artCard.alpha = 0f
-            artCard.animate().alpha(1f).setDuration(450).start()
+            artFrame.alpha = 0f
+            artFrame.translationY = 8 * dp
+            artFrame.animate().alpha(1f).translationY(0f).setDuration(500).setInterpolator(android.view.animation.DecelerateInterpolator(1.6f)).start()
+            kenBurns(artCard)
         }
+    }
+
+    /** Slow push-in on artwork, like the motion in Apple TV's Top Shelf. */
+    private fun kenBurns(v: View) {
+        v.animate().cancel()
+        v.scaleX = 1f; v.scaleY = 1f
+        v.animate().scaleX(1.07f).scaleY(1.07f).setDuration(ROTATE_MS + 1500)
+            .setInterpolator(android.view.animation.LinearInterpolator()).start()
+    }
+
+    private fun softShadow(w: Int, h: Int, pad: Float): Bitmap {
+        val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = 0xCC000000.toInt()
+            maskFilter = android.graphics.BlurMaskFilter(pad * 0.6f, android.graphics.BlurMaskFilter.Blur.NORMAL)
+        }
+        android.graphics.Canvas(b).drawRoundRect(android.graphics.RectF(pad, pad, w - pad, h - pad), 16 * dp, 16 * dp, p)
+        return b
     }
 
     // ---------- actions ----------
