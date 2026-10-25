@@ -20,12 +20,7 @@ Built for a Xiaomi Mi Box 4 (Android 9, 2 GB RAM) — ~250 KB APK, no background
 | Top Shelf | ↓ or Back | Back to the app tile |
 | Any tile | Hold OK | Tile options |
 
-## Design
-| Mockup v3 (tvOS-style Top Shelf) | Mockup v2 |
-|---|---|
-| ![](docs/screenshots/design-mockup-v3.jpg) | ![](docs/screenshots/design-mockup-v2.jpg) |
-
-Wallpaper:
+## Wallpaper
 
 ![](docs/screenshots/wallpaper-warm.jpg)
 
