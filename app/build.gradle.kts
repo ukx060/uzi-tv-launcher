@@ -11,7 +11,7 @@ android {
         applicationId = "ee.uzi.tvlauncher"
         minSdk = 26
         targetSdk = 34
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        versionCode = (System.currentTimeMillis() / 60000L).toInt() // minutes since epoch: always increasing
         versionName = "1.0." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
     }
 
