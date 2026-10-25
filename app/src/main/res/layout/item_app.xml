@@ -30,6 +30,6 @@
         android:layout_marginTop="15dp" android:gravity="center"
         android:maxLines="1" android:ellipsize="end"
         android:fontFamily="sans-serif-medium"
-        android:shadowColor="#99000000" android:shadowDy="1" android:shadowRadius="6"
-        android:textColor="#FFFFFF" android:textSize="15sp" android:alpha="0" />
+        android:shadowColor="#99140C08" android:shadowDy="1" android:shadowRadius="6"
+        android:textColor="#FFF6EA" android:textSize="15sp" android:alpha="0" />
 </LinearLayout>

@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="#140C08"
     android:clipChildren="false" android:clipToPadding="false">
 
     <ImageView android:id="@+id/wall" android:layout_width="match_parent" android:layout_height="match_parent"
@@ -50,19 +50,19 @@
             <TextView android:id="@+id/heroSub"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium" android:textAllCaps="true" android:letterSpacing="0.1"
-                android:textColor="#D9FFFFFF" android:textSize="12sp" />
+                android:textColor="#D9FFF1E0" android:textSize="12sp" />
             <TextView android:id="@+id/heroTitle"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif" android:textStyle="bold" android:letterSpacing="-0.02"
                 android:maxLines="2" android:ellipsize="end" android:lineSpacingMultiplier="0.92"
                 android:shadowColor="#66000000" android:shadowDy="2" android:shadowRadius="10"
-                android:textColor="#FFFFFF" android:textSize="34sp" />
+                android:textColor="#FFF6EA" android:textSize="34sp" />
             <TextView android:id="@+id/heroDesc"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="6dp" android:maxLines="2" android:ellipsize="end"
                 android:lineSpacingMultiplier="1.1"
-                android:textColor="#B8FFFFFF" android:textSize="15sp" />
+                android:textColor="#B8FFEEDC" android:textSize="15sp" />
             <LinearLayout
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="20dp" android:clipChildren="false" android:orientation="horizontal">
@@ -82,8 +82,8 @@
         android:layout_marginTop="24dp" android:layout_marginEnd="48dp"
         android:format12Hour="h:mm" android:format24Hour="HH:mm"
         android:fontFamily="sans-serif-medium"
-        android:shadowColor="#99000000" android:shadowDy="2" android:shadowRadius="8"
-        android:textColor="#FFFFFFFF" android:textSize="26sp" />
+        android:shadowColor="#99140C08" android:shadowDy="2" android:shadowRadius="8"
+        android:textColor="#FFFFF6EA" android:textSize="26sp" />
 
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/grid"
         android:layout_width="match_parent" android:layout_height="match_parent"

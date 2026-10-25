@@ -36,7 +36,7 @@ class AppAdapter(
         val w = tileW + shadowPad * 2; val h = tileH + shadowPad * 2
         val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = 0xE6000000.toInt()
+            color = 0xE60E0805.toInt()
             maskFilter = BlurMaskFilter(shadowPad * 0.55f, BlurMaskFilter.Blur.NORMAL)
         }
         val r = liftPx * 0.6f

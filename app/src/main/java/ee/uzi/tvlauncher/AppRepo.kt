@@ -47,7 +47,7 @@ object AppRepo {
         val apps = seen.values
             .filter { it.pkg !in hidden }
             .sortedWith(compareBy<AppEntry>({ order.indexOf(it.pkg).let { i -> if (i < 0) Int.MAX_VALUE else i } }, { it.label.lowercase() }))
-        return apps + AppEntry(SETTINGS, "Settings", null, ctx.getDrawable(R.drawable.ic_settings), true, Color.rgb(58, 58, 60))
+        return apps + AppEntry(SETTINGS, "Settings", null, ctx.getDrawable(R.drawable.ic_settings), true, Color.rgb(62, 52, 46))
     }
 
     /** Average opaque colour of an icon, darkened: gives icon-only apps a matching tile. */
@@ -65,7 +65,7 @@ object AppRepo {
             r += Color.red(c) * w; g += Color.green(c) * w; bl += Color.blue(c) * w; n += w
         }
         b.recycle()
-        if (n == 0L) return Color.rgb(44, 44, 46)
+        if (n == 0L) return Color.rgb(46, 38, 33)
         val k = 0.55f
         return Color.rgb((r / n * k).toInt(), (g / n * k).toInt(), (bl / n * k).toInt())
     }

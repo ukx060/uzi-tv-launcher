@@ -405,7 +405,7 @@ class MainActivity : Activity() {
         val show = if (showingA) bgB else bgA
         val hide = if (showingA) bgA else bgB
         show.setImageBitmap(bg)
-        show.setColorFilter(if (hiRes) 0 else 0x4D000000, android.graphics.PorterDuff.Mode.SRC_ATOP)
+        show.setColorFilter(if (hiRes) 0x14281408 else 0x4D1E0F06, android.graphics.PorterDuff.Mode.SRC_ATOP)
         show.animate().cancel()
         show.scaleX = 1f; show.scaleY = 1f
         show.animate().alpha(1f).setDuration(500).start()
