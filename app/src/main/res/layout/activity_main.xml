@@ -23,24 +23,19 @@
         <View android:id="@+id/vignette" android:layout_width="match_parent" android:layout_height="match_parent"
             android:background="@drawable/vignette" />
 
+        <!-- Hero art: no box, edges dissolve into the background; revealed like fog clearing -->
         <FrameLayout android:id="@+id/artFrame"
-            android:layout_width="408dp" android:layout_height="230dp"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="72dp" android:layout_marginEnd="52dp"
-            android:clipChildren="false" android:alpha="0">
-            <ImageView android:id="@+id/artShadow"
-                android:layout_width="468dp" android:layout_height="290dp"
-                android:layout_gravity="center" android:translationY="10dp"
-                android:importantForAccessibility="no" />
-            <FrameLayout android:id="@+id/artClip"
+            android:layout_width="660dp" android:layout_height="372dp"
+            android:layout_gravity="top|end" android:alpha="0">
+            <ee.uzi.tvlauncher.FadeImageView android:id="@+id/artFog"
                 android:layout_width="match_parent" android:layout_height="match_parent"
-                android:background="@drawable/card_bg">
-                <ImageView android:id="@+id/artCard"
-                    android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:scaleType="centerCrop" android:importantForAccessibility="no" />
-                <View android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:background="@drawable/glass" />
-            </FrameLayout>
+                android:scaleType="centerCrop" android:importantForAccessibility="no" />
+            <ee.uzi.tvlauncher.FadeImageView android:id="@+id/artCard"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:scaleType="centerCrop" android:importantForAccessibility="no" />
+            <View android:id="@+id/haze"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:background="@drawable/haze" android:alpha="0" />
         </FrameLayout>
 
         <LinearLayout android:id="@+id/shelfPanel"

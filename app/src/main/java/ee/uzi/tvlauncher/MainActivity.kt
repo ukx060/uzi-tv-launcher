@@ -40,7 +40,8 @@ class MainActivity : Activity() {
     private lateinit var artScrim: View
     private lateinit var artCard: ImageView
     private lateinit var artFrame: View
-    private lateinit var artClip: View
+    private lateinit var artFog: ImageView
+    private lateinit var haze: View
     private lateinit var artScrimLeft: View
     private lateinit var panel: View
     private lateinit var heroTitle: TextView
@@ -101,9 +102,8 @@ class MainActivity : Activity() {
         artScrim = findViewById(R.id.artScrim)
         artCard = findViewById(R.id.artCard)
         artFrame = findViewById(R.id.artFrame)
-        artClip = findViewById(R.id.artClip)
-        artClip.clipToOutline = true
-        findViewById<ImageView>(R.id.artShadow).setImageBitmap(softShadow((468 * dp).toInt(), (290 * dp).toInt(), (30 * dp)))
+        artFog = findViewById(R.id.artFog)
+        haze = findViewById(R.id.haze)
         artScrimLeft = findViewById(R.id.artScrimLeft)
         panel = findViewById(R.id.shelfPanel)
         heroTitle = findViewById(R.id.heroTitle)
@@ -392,52 +392,53 @@ class MainActivity : Activity() {
         pendingBg?.let { main.removeCallbacks(it) }
         bgA.animate().alpha(0f).setDuration(350).start()
         bgB.animate().alpha(0f).setDuration(350).start()
-        artFrame.animate().alpha(0f).setDuration(250).start()
+        artFrame.animate().alpha(0f).setDuration(400).start()
     }
 
     /**
      * Sharp, large art goes full-bleed. Small art (e.g. 480px YouTube thumbnails) would look cheap
      * stretched, so it is shown as a crisp card and the background becomes a soft ambient blur of it.
      */
+    /** Ambient blur behind everything; the art itself dissolves in from fog on the right. */
     private fun crossfade(bmp: Bitmap) {
-        val hiRes = bmp.width >= 1100
-        val bg = if (hiRes) bmp else Ambient.blur(bmp)
+        val bg = Ambient.blur(bmp)
         val show = if (showingA) bgB else bgA
         val hide = if (showingA) bgA else bgB
         show.setImageBitmap(bg)
-        show.setColorFilter(if (hiRes) 0x14281408 else 0x4D1E0F06, android.graphics.PorterDuff.Mode.SRC_ATOP)
-        show.animate().cancel()
-        show.scaleX = 1f; show.scaleY = 1f
-        show.animate().alpha(1f).setDuration(500).start()
-        if (hiRes) kenBurns(show)
-        hide.animate().alpha(0f).setDuration(500).start()
+        show.setColorFilter(0x4D1E0F06, android.graphics.PorterDuff.Mode.SRC_ATOP)
+        show.animate().alpha(1f).setDuration(700).start()
+        hide.animate().alpha(0f).setDuration(700).start()
         showingA = !showingA
-        if (hiRes) artFrame.animate().alpha(0f).setDuration(250).start()
-        else {
+        fogReveal(bmp)
+    }
+
+    private fun fogReveal(bmp: Bitmap) {
+        val reveal = Runnable {
+            val fog = Bitmap.createScaledBitmap(bmp, (bmp.width / 14).coerceAtLeast(8), (bmp.height / 14).coerceAtLeast(5), true)
+            artFog.setImageBitmap(fog)
             artCard.setImageBitmap(bmp)
-            artFrame.alpha = 0f
-            artFrame.translationY = 8 * dp
-            artFrame.animate().alpha(1f).translationY(0f).setDuration(500).setInterpolator(android.view.animation.DecelerateInterpolator(1.6f)).start()
-            kenBurns(artCard)
+            artFog.alpha = 1f; artCard.alpha = 0f; haze.alpha = 0.85f
+            artCard.scaleX = 1.04f; artCard.scaleY = 1.04f
+            artFrame.animate().cancel()
+            artFrame.alpha = 1f
+            val ease = android.view.animation.DecelerateInterpolator(1.4f)
+            artCard.animate().alpha(1f).setStartDelay(150).setDuration(1100).setInterpolator(ease)
+                .withEndAction { kenBurns(artCard) }.start()
+            artFog.animate().alpha(0f).setStartDelay(350).setDuration(1300).setInterpolator(ease).start()
+            haze.animate().alpha(0f).setStartDelay(200).setDuration(1500).setInterpolator(ease).start()
         }
+        if (artFrame.alpha > 0.01f) {
+            // fog rolls back in over the old art, then clears on the new one
+            haze.animate().alpha(0.85f).setDuration(260).start()
+            artCard.animate().cancel()
+            artCard.animate().alpha(0f).setStartDelay(0).setDuration(300).withEndAction(reveal).start()
+        } else reveal.run()
     }
 
     /** Slow push-in on artwork, like the motion in Apple TV's Top Shelf. */
     private fun kenBurns(v: View) {
-        v.animate().cancel()
-        v.scaleX = 1f; v.scaleY = 1f
-        v.animate().scaleX(1.07f).scaleY(1.07f).setDuration(ROTATE_MS + 1500)
+        v.animate().scaleX(1.0f).scaleY(1.0f).setStartDelay(0).setDuration(ROTATE_MS)
             .setInterpolator(android.view.animation.LinearInterpolator()).start()
-    }
-
-    private fun softShadow(w: Int, h: Int, pad: Float): Bitmap {
-        val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = 0xCC000000.toInt()
-            maskFilter = android.graphics.BlurMaskFilter(pad * 0.6f, android.graphics.BlurMaskFilter.Blur.NORMAL)
-        }
-        android.graphics.Canvas(b).drawRoundRect(android.graphics.RectF(pad, pad, w - pad, h - pad), 16 * dp, 16 * dp, p)
-        return b
     }
 
     // ---------- actions ----------
