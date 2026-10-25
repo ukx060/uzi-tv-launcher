@@ -20,9 +20,16 @@
         <View android:id="@+id/artScrimLeft" android:layout_width="match_parent" android:layout_height="match_parent"
             android:background="@drawable/scrim_left" android:alpha="0" />
 
+        <ImageView android:id="@+id/artCard"
+            android:layout_width="400dp" android:layout_height="225dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="74dp" android:layout_marginEnd="56dp"
+            android:background="@drawable/card_bg" android:scaleType="centerCrop"
+            android:elevation="18dp" android:alpha="0" android:importantForAccessibility="no" />
+
         <LinearLayout android:id="@+id/shelfPanel"
-            android:layout_width="620dp" android:layout_height="wrap_content"
-            android:layout_marginStart="56dp" android:layout_marginTop="122dp"
+            android:layout_width="440dp" android:layout_height="wrap_content"
+            android:layout_marginStart="56dp" android:layout_marginTop="100dp"
             android:alpha="0" android:orientation="vertical">
             <TextView android:id="@+id/heroSub"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -32,9 +39,9 @@
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif" android:textStyle="bold" android:letterSpacing="-0.02"
-                android:maxLines="1" android:ellipsize="end"
+                android:maxLines="2" android:ellipsize="end" android:lineSpacingMultiplier="0.92"
                 android:shadowColor="#66000000" android:shadowDy="2" android:shadowRadius="10"
-                android:textColor="#FFFFFF" android:textSize="44sp" />
+                android:textColor="#FFFFFF" android:textSize="34sp" />
             <TextView android:id="@+id/heroDesc"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:layout_marginTop="2dp" android:maxLines="1" android:ellipsize="end"

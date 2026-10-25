@@ -3,6 +3,12 @@
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:clipChildren="false" android:clipToPadding="false"
     android:gravity="center_horizontal" android:orientation="vertical">
+    <FrameLayout android:id="@+id/card"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:clipChildren="false" android:clipToPadding="false">
+    <ImageView android:id="@+id/shadow"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:alpha="0" android:importantForAccessibility="no" />
     <FrameLayout android:id="@+id/tile"
         android:layout_width="160dp" android:layout_height="90dp"
         android:background="@drawable/tile_bg"
@@ -17,6 +23,7 @@
             android:background="@drawable/dim" android:alpha="0.42" />
         <View android:id="@+id/rim" android:layout_width="match_parent" android:layout_height="match_parent"
             android:background="@drawable/rim" android:alpha="0" />
+    </FrameLayout>
     </FrameLayout>
     <TextView android:id="@+id/label"
         android:layout_width="match_parent" android:layout_height="wrap_content"

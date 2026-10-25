@@ -38,6 +38,7 @@ class MainActivity : Activity() {
     private lateinit var bgA: ImageView
     private lateinit var bgB: ImageView
     private lateinit var artScrim: View
+    private lateinit var artCard: ImageView
     private lateinit var artScrimLeft: View
     private lateinit var panel: View
     private lateinit var heroTitle: TextView
@@ -96,6 +97,7 @@ class MainActivity : Activity() {
         bgA = findViewById(R.id.bgA)
         bgB = findViewById(R.id.bgB)
         artScrim = findViewById(R.id.artScrim)
+        artCard = findViewById(R.id.artCard)
         artScrimLeft = findViewById(R.id.artScrimLeft)
         panel = findViewById(R.id.shelfPanel)
         heroTitle = findViewById(R.id.heroTitle)
@@ -338,6 +340,7 @@ class MainActivity : Activity() {
         val item = shelfItems.getOrNull(i) ?: return
         shelfIndex = i
         val app = currentApp?.label ?: ""
+        artCard.clipToOutline = true
         heroSub.text = if (item.upNext) "Up Next · $app" else "Featured on $app"
         heroTitle.text = item.title
         heroDesc.text = item.subtitle ?: ""
@@ -384,15 +387,29 @@ class MainActivity : Activity() {
         pendingBg?.let { main.removeCallbacks(it) }
         bgA.animate().alpha(0f).setDuration(350).start()
         bgB.animate().alpha(0f).setDuration(350).start()
+        artCard.animate().alpha(0f).setDuration(250).start()
     }
 
+    /**
+     * Sharp, large art goes full-bleed. Small art (e.g. 480px YouTube thumbnails) would look cheap
+     * stretched, so it is shown as a crisp card and the background becomes a soft ambient blur of it.
+     */
     private fun crossfade(bmp: Bitmap) {
+        val hiRes = bmp.width >= 1100
+        val bg = if (hiRes) bmp else Ambient.blur(bmp)
         val show = if (showingA) bgB else bgA
         val hide = if (showingA) bgA else bgB
-        show.setImageBitmap(bmp)
+        show.setImageBitmap(bg)
+        show.setColorFilter(if (hiRes) 0 else 0x59000000, android.graphics.PorterDuff.Mode.SRC_ATOP)
         show.animate().alpha(1f).setDuration(450).start()
         hide.animate().alpha(0f).setDuration(450).start()
         showingA = !showingA
+        if (hiRes) artCard.animate().alpha(0f).setDuration(250).start()
+        else {
+            artCard.setImageBitmap(bmp)
+            artCard.alpha = 0f
+            artCard.animate().alpha(1f).setDuration(450).start()
+        }
     }
 
     // ---------- actions ----------
