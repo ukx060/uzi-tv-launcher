@@ -15,7 +15,7 @@
             android:layout_gravity="bottom" android:background="@drawable/caption_scrim"
             android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="14dp" android:paddingBottom="5dp"
             android:maxLines="1" android:ellipsize="end"
-            android:fontFamily="sans-serif-medium" android:textColor="#FFFFFF" android:textSize="11sp" />
+            android:fontFamily="sans-serif-medium" android:textColor="#FFFFFF" android:textSize="12sp" />
     </FrameLayout>
     <View android:id="@+id/sbar"
         android:layout_width="24dp" android:layout_height="3dp"

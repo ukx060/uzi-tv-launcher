@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.graphics.Bitmap
+import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.media.tv.TvContract
 import android.net.Uri
@@ -82,6 +83,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFormat(PixelFormat.RGBA_8888) // avoid 16-bit banding on TV surfaces
         setContentView(R.layout.activity_main)
         prefs = Prefs(this)
         images = ImageLoader(applicationContext)
@@ -258,7 +260,7 @@ class MainActivity : Activity() {
         shelfAdapter.active = idx
         val img = item.image
         if (img == null) { currentApp?.let { a -> setBackground("blur|${a.pkg}", blurFor(a)) }; return }
-        setBackground("img|$img") { cb -> images.load(img, 960) { b -> cb(b) } }
+        setBackground("img|$img") { cb -> images.load(img, 1280) { b -> cb(b) } }
     }
 
     private fun onShelfFocused(item: ShelfItem, idx: Int) {

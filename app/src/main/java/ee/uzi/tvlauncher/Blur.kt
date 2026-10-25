@@ -7,8 +7,8 @@ import android.graphics.drawable.Drawable
 
 /** Cheap background blur for API 24+ (no RenderEffect): draw tiny, box-blur, upscale. */
 object Blur {
-    private const val W = 96
-    private const val H = 54
+    private const val W = 192
+    private const val H = 108
 
     fun fromDrawable(src: Drawable, isBanner: Boolean): Bitmap {
         val d = src.constantState?.newDrawable()?.mutate() ?: src
@@ -19,11 +19,9 @@ object Blur {
         d.draw(c)
         val px = IntArray(W * H)
         small.getPixels(px, 0, W, 0, 0, W, H)
-        repeat(3) { boxBlur(px, 6) }
+        repeat(3) { boxBlur(px, 10) }
         small.setPixels(px, 0, W, 0, 0, W, H)
-        val big = Bitmap.createScaledBitmap(small, W * 4, H * 4, true)
-        small.recycle()
-        return big
+        return small
     }
 
     private fun boxBlur(p: IntArray, r: Int) {

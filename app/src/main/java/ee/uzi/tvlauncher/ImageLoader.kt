@@ -17,7 +17,7 @@ import java.util.concurrent.Executors
 class ImageLoader(private val ctx: Context) {
     private val pool = Executors.newFixedThreadPool(2)
     private val main = Handler(Looper.getMainLooper())
-    private val cache = object : LruCache<String, Bitmap>(24 * 1024 * 1024) {
+    private val cache = object : LruCache<String, Bitmap>(40 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap) = value.byteCount
     }
 
@@ -56,7 +56,7 @@ class ImageLoader(private val ctx: Context) {
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
         var s = 1
         while (o.outWidth / (s * 2) >= maxW) s *= 2
-        val o2 = BitmapFactory.Options().apply { inSampleSize = s; inPreferredConfig = Bitmap.Config.RGB_565 }
+        val o2 = BitmapFactory.Options().apply { inSampleSize = s; inPreferredConfig = Bitmap.Config.ARGB_8888 }
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o2)
     }
 
