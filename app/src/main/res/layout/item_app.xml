@@ -11,7 +11,7 @@
         android:clickable="true" android:longClickable="true">
         <ImageView android:id="@+id/banner" android:layout_width="match_parent" android:layout_height="match_parent"
             android:scaleType="centerCrop" android:importantForAccessibility="no" />
-        <ImageView android:id="@+id/icon" android:layout_width="44dp" android:layout_height="44dp"
+        <ImageView android:id="@+id/icon" android:layout_width="56dp" android:layout_height="56dp"
             android:layout_gravity="center" android:scaleType="fitCenter" android:importantForAccessibility="no" />
         <View android:id="@+id/shine" android:layout_width="match_parent" android:layout_height="match_parent"
             android:background="@drawable/shine" android:alpha="0" />

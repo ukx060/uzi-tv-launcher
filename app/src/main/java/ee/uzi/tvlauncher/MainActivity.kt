@@ -17,7 +17,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.util.LruCache
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -43,7 +42,6 @@ class MainActivity : Activity() {
 
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
-    private val blurCache = LruCache<String, Bitmap>(32)
     private var showingA = true
     private var bgKey: String? = null
     private var pendingBg: Runnable? = null
@@ -53,6 +51,7 @@ class MainActivity : Activity() {
     private var rotIndex = 0
     private var shelves: Map<String, List<ShelfItem>> = emptyMap()
     private var loaded = false
+    private var initSent = false
 
     private val rotate = object : Runnable {
         override fun run() {
@@ -76,7 +75,6 @@ class MainActivity : Activity() {
 
     private val pkgReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
-            i.data?.schemeSpecificPart?.let { blurCache.remove(it) }
             reload()
         }
     }
@@ -97,8 +95,8 @@ class MainActivity : Activity() {
 
         val dm = resources.displayMetrics
         val d = dm.density
-        val cols = 6
-        val gap = (18 * d).toInt()
+        val cols = 5
+        val gap = (26 * d).toInt()
         val side = (64 * d).toInt() - gap / 2
         grid.setPadding(side, grid.paddingTop, side, grid.paddingBottom)
         val span = (dm.widthPixels - 2 * side) / cols
@@ -109,7 +107,7 @@ class MainActivity : Activity() {
         grid.layoutManager = GridLayoutManager(this, cols)
         grid.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(out: Rect, v: View, p: RecyclerView, s: RecyclerView.State) {
-                out.set(0, 0, 0, (16 * d).toInt())
+                out.set(0, 0, 0, (20 * d).toInt())
             }
         })
         grid.itemAnimator = null
@@ -188,6 +186,7 @@ class MainActivity : Activity() {
     private fun reload() {
         io.execute {
             val list = AppRepo.load(applicationContext, prefs)
+            if (!initSent) { initSent = true; requestPrograms(list) }
             main.post {
                 adapter.submit(list)
                 val target = focusPkg?.let { p -> list.indexOfFirst { it.pkg == p } }?.takeIf { it >= 0 } ?: 0
@@ -217,6 +216,13 @@ class MainActivity : Activity() {
 
     // ---------- top shelf ----------
 
+    /** Apps publish Top Shelf rows when a launcher asks; the stock launcher normally does this. */
+    private fun requestPrograms(list: List<AppEntry>) {
+        for (e in list) if (!e.isSettings) try {
+            sendBroadcast(Intent(TvContract.ACTION_INITIALIZE_PROGRAMS).setPackage(e.pkg))
+        } catch (_: Exception) {}
+    }
+
     private fun loadShelves() {
         io.execute {
             val m = ShelfRepo.load(applicationContext)
@@ -234,12 +240,11 @@ class MainActivity : Activity() {
             shelfPkg = null
             shelfAdapter.submit(emptyList())
             shelf.visibility = View.INVISIBLE
-            heroSub.text = ""
-            heroTitle.text = e.label
-            heroDesc.text = if (e.isSettings) "Hold OK for launcher options" else "Press OK to open · Hold OK for options"
-            setBackground("blur|${e.pkg}", blurFor(e))
+            showHero(false)
+            clearBackground()
             return
         }
+        showHero(true)
         if (shelfPkg != e.pkg) {
             shelfPkg = e.pkg
             shelfAdapter.submit(items)
@@ -259,7 +264,7 @@ class MainActivity : Activity() {
         heroDesc.text = item.subtitle ?: ""
         shelfAdapter.active = idx
         val img = item.image
-        if (img == null) { currentApp?.let { a -> setBackground("blur|${a.pkg}", blurFor(a)) }; return }
+        if (img == null) { clearBackground(); return }
         setBackground("img|$img") { cb -> images.load(img, 1280) { b -> cb(b) } }
     }
 
@@ -291,17 +296,16 @@ class MainActivity : Activity() {
         main.postDelayed(r, 110)
     }
 
-    private fun blurFor(e: AppEntry): ((Bitmap?) -> Unit) -> Unit = { cb: (Bitmap?) -> Unit ->
-        val hit = blurCache.get(e.pkg)
-        if (hit != null) cb(hit)
-        else {
-            val d = e.banner ?: e.icon
-            if (d == null) cb(null)
-            else io.execute {
-                val b = try { Blur.fromDrawable(d, e.banner != null) } catch (_: Throwable) { null }
-                main.post { if (b != null) blurCache.put(e.pkg, b); cb(b) }
-            }
-        }
+    private fun clearBackground() {
+        bgKey = null
+        pendingBg?.let { main.removeCallbacks(it) }
+        bgA.animate().alpha(0f).setDuration(350).start()
+        bgB.animate().alpha(0f).setDuration(350).start()
+    }
+
+    private fun showHero(on: Boolean) {
+        val a = if (on) 1f else 0f
+        for (v in arrayOf(heroSub, heroTitle, heroDesc)) v.animate().alpha(a).setDuration(250).start()
     }
 
     private fun crossfade(bmp: Bitmap) {

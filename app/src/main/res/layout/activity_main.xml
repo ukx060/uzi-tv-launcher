@@ -7,8 +7,10 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
+    <ImageView android:id="@+id/wall" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="centerCrop" android:src="@drawable/wallpaper" android:importantForAccessibility="no" />
     <ImageView android:id="@+id/bgA" android:layout_width="match_parent" android:layout_height="match_parent"
-        android:scaleType="centerCrop" android:importantForAccessibility="no" />
+        android:scaleType="centerCrop" android:alpha="0" android:importantForAccessibility="no" />
     <ImageView android:id="@+id/bgB" android:layout_width="match_parent" android:layout_height="match_parent"
         android:scaleType="centerCrop" android:alpha="0" android:importantForAccessibility="no" />
     <View android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/scrim" />

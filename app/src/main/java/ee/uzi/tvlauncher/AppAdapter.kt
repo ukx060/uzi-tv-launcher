@@ -1,5 +1,6 @@
 package ee.uzi.tvlauncher
 
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -68,7 +69,7 @@ class AppAdapter(
     }
 
     private fun animateFocus(h: VH, t: View, has: Boolean) {
-        val s = if (has) 1.12f else 1f
+        val s = if (has) 1.1f else 1f
         t.animate().scaleX(s).scaleY(s).translationZ(if (has) liftPx else 0f)
             .setDuration(170).setInterpolator(interp).start()
         h.shine.animate().alpha(if (has) 1f else 0f).setDuration(170).start()
@@ -85,10 +86,11 @@ class AppAdapter(
             h.banner.setImageDrawable(null); h.banner.visibility = View.GONE
             h.icon.setImageDrawable(e.icon); h.icon.visibility = View.VISIBLE
         }
+        h.tile.backgroundTintList = e.tint?.let { ColorStateList.valueOf(it) }
         h.label.text = e.label
         h.tile.contentDescription = e.label
         val f = h.tile.isFocused
-        h.tile.scaleX = if (f) 1.12f else 1f
+        h.tile.scaleX = if (f) 1.1f else 1f
         h.tile.scaleY = h.tile.scaleX
         h.tile.translationZ = if (f) liftPx else 0f
         h.shine.alpha = if (f) 1f else 0f
