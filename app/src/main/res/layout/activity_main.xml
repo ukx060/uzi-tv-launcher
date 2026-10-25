@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <ImageView android:id="@+id/bgA" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="centerCrop" android:importantForAccessibility="no" />
+    <ImageView android:id="@+id/bgB" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="centerCrop" android:alpha="0" android:importantForAccessibility="no" />
+    <View android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/scrim" />
+    <View android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/scrim_left" />
+
+    <TextClock android:id="@+id/clock"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="32dp" android:layout_marginEnd="48dp"
+        android:format12Hour="h:mm" android:format24Hour="HH:mm"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="#D9FFFFFF" android:textSize="22sp" />
+
+    <LinearLayout android:id="@+id/hero"
+        android:layout_width="560dp" android:layout_height="wrap_content"
+        android:layout_marginStart="64dp" android:layout_marginTop="84dp"
+        android:orientation="vertical">
+        <TextView android:id="@+id/heroSub"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium" android:textAllCaps="true" android:letterSpacing="0.08"
+            android:textColor="#B3FFFFFF" android:textSize="12sp" />
+        <TextView android:id="@+id/heroTitle"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="sans-serif" android:textStyle="bold"
+            android:letterSpacing="-0.02" android:maxLines="2" android:ellipsize="end"
+            android:textColor="#FFFFFF" android:textSize="40sp" />
+        <TextView android:id="@+id/heroDesc"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:maxLines="2" android:ellipsize="end"
+            android:textColor="#A6FFFFFF" android:textSize="15sp" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/shelf"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="212dp"
+        android:paddingStart="64dp" android:paddingEnd="64dp" android:paddingTop="8dp"
+        android:clipChildren="false" android:clipToPadding="false"
+        android:overScrollMode="never" android:scrollbars="none"
+        android:visibility="invisible" />
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/grid"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:layout_marginTop="336dp"
+        android:paddingStart="64dp" android:paddingEnd="64dp"
+        android:paddingTop="20dp" android:paddingBottom="60dp"
+        android:clipChildren="false" android:clipToPadding="false"
+        android:descendantFocusability="afterDescendants"
+        android:overScrollMode="never" android:scrollbars="none" />
+</FrameLayout>
