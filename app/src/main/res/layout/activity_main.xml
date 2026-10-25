@@ -10,7 +10,8 @@
 
     <!-- Top Shelf: fades as the grid scrolls up -->
     <FrameLayout android:id="@+id/topWrap"
-        android:layout_width="match_parent" android:layout_height="match_parent">
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:clipChildren="false" android:clipToPadding="false">
         <ImageView android:id="@+id/bgA" android:layout_width="match_parent" android:layout_height="match_parent"
             android:scaleType="centerCrop" android:alpha="0" android:importantForAccessibility="no" />
         <ImageView android:id="@+id/bgB" android:layout_width="match_parent" android:layout_height="match_parent"
@@ -41,7 +42,8 @@
         <LinearLayout android:id="@+id/shelfPanel"
             android:layout_width="440dp" android:layout_height="wrap_content"
             android:layout_marginStart="56dp" android:layout_marginTop="100dp"
-            android:alpha="0" android:orientation="vertical">
+            android:alpha="0" android:orientation="vertical"
+            android:clipChildren="false" android:clipToPadding="false">
             <TextView android:id="@+id/heroSub"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium" android:textAllCaps="true" android:letterSpacing="0.1"
@@ -60,7 +62,7 @@
                 android:textColor="#B8FFEEDC" android:textSize="15sp" />
             <LinearLayout
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="20dp" android:clipChildren="false" android:orientation="horizontal">
+                android:layout_marginTop="20dp" android:clipChildren="false" android:clipToPadding="false" android:orientation="horizontal">
                 <TextView android:id="@+id/btnPlay" style="@style/UziButton" android:text="Play"
                     android:drawableStart="@drawable/ic_play" android:drawablePadding="8dp" android:drawableTint="@color/btn_text" />
                 <TextView android:id="@+id/btnOpen" style="@style/UziButton" android:layout_marginStart="11dp" />
